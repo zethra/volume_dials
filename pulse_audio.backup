@@ -1,0 +1,26 @@
+extern crate libpulse_sys;
+
+use std::ffi::CString;
+use std::ptr;
+
+use libpulse_sys::{
+    pa_mainloop_new,
+    pa_mainloop_get_api,
+    pa_context_new,
+    pa_context_set_sink_volume_by_index,
+    pa_cvolume,
+};
+
+fn main() {
+    let volume = 70;
+
+    unsafe {
+                let mainloop = pa_mainloop_new();
+                let name = CString::new("nobs").unwrap();
+                let context = pa_context_new(pa_mainloop_get_api(mainloop), name.as_ptr());
+                let vol = pa_cvolume::default();
+                pa_context_set_sink_volume_by_index(context, 1, &vol, None, ptr::null_mut());
+    }
+}
+
+
