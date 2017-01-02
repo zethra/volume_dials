@@ -30,7 +30,7 @@ fn main() {
     };
     let (_, max) = selem.get_playback_volume_range();
 
-    let mut port = match serial::open("/dev/ttyACM1") {
+    let mut port = match serial::open("/dev/ttyACM0") {
         Ok(port) => port,
         Err(_) => {
             println!("Could not open serial port");
@@ -54,14 +54,21 @@ fn main() {
     }
 
     let mut buf: Vec<u8> = vec![0];
+    let mut errors = 0;
     loop {
-        if port.read(&mut buf[..]).is_err() {
+        if port.read_exact(&mut buf[..]).is_err() {
             println!("Couldn't read from serial port");
-            continue
-        }
-        for ch in SelemChannelId::all() {
-            if selem.set_playback_volume(*ch, buf[0] as i64 * max / 100).is_err() {
-                println!("Couldn't change volume")
+            if errors > 10 {
+                break
+            } else {
+                errors += 1;
+            }
+        } else {
+            errors = 0;
+            for ch in SelemChannelId::all() {
+                if selem.set_playback_volume(*ch, buf[0] as i64 * max / 100).is_err() {
+                    println!("Couldn't change volume")
+                }
             }
         }
     }
